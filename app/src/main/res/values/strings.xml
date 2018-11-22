@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Software Development2018</string>
+    <string name="gps_stigma">GPS Stigma</string>
+    <string name="gps_location">GPS Location</string>
+    <string name="send_gps">Send GPS</string>
+    <string name="mac_adress">Mac adress</string>
+    <string name="mac_address">MAC Address</string>
+    <string name="button">Button</string>
+    <string name="send_data_every">Send data every:</string>
+    <string name="name">Name</string>
+    <string name="time">Time</string>
+    <string name="submit">SUBMIT</string>
+    <string name="settings">Settings</string>
+    <string name="exit">Exit</string>
+    <string name="milliseconds"></string>
+    <string name="millisecs">millisecs</string>
+</resources>
