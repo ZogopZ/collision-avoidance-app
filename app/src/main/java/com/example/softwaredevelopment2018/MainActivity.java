@@ -64,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
     private LocationListener locationListener;
     TextView subText;
 
-    static String topic = "danger1";
     private BroadcastReceiver mConnReceiver;
 
     @Override
@@ -115,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_LONG).show();
                     setSubscription();
+                    myRingtone.play();
                 }
 
                 @Override
@@ -157,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
                     byte[] encodedPayload = payload.getBytes("UTF-8");
                     MqttMessage message = new MqttMessage(encodedPayload);
                     client.publish(topic, message);
+                    setSubscription();
                 } catch (UnsupportedEncodingException | MqttException e) {
                     e.printStackTrace();
                 }
@@ -278,12 +279,27 @@ public class MainActivity extends AppCompatActivity {
 
     public void setSubscription()
     {
-        try{
-            IMqttToken subscribe = client.subscribe(topic, 0);
-        }catch(MqttException e){
+        String topic = "Mac Address";
+        int qos = 1;
+        try {
+            IMqttToken subToken = client.subscribe(topic, qos);
+            subToken.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    // The message was published
+                    myRingtone.play();
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken,
+                                      Throwable exception) {
+                    // The subscription could not be performed, maybe the user was not
+                    // authorized to subscribe on the specified topic e.g. using wildcards
+
+                }
+            });
+        } catch (MqttException e) {
             e.printStackTrace();
         }
     }
-    //Periodical check for internet connection
-
 }
