@@ -9,13 +9,10 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 public class EdgeSocketClient
 {
-    public static void main(String[] args)
+//    public static void main(String[] args)
+    public static void connect()
     {
         String destUri = "ws://localhost:8080";
-        if (args.length > 0)
-        {
-            destUri = args[0];
-        }
 
         System.out.println("|Connecting to Backhaul server|");
         WebSocketClient client = new WebSocketClient();
@@ -27,8 +24,7 @@ public class EdgeSocketClient
             ClientUpgradeRequest request = new ClientUpgradeRequest();
             client.connect(socket, echoUri, request);
 
-            // wait for closed socket connection.
-            socket.awaitClose(5, TimeUnit.SECONDS);
+            socket.awaitClose(5, TimeUnit.SECONDS); // Wait for closed socket connection.
             Thread.sleep(3000);
         }
         catch (Throwable t) { t.printStackTrace(); }
