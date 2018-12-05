@@ -1,10 +1,6 @@
 package edge.server;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -58,8 +54,13 @@ public class EdgeSocket
     @OnWebSocketMessage
     public void onMessage(String message) throws IOException
     {
-        System.out.printf(" -Backhaul Server says -> %s%n",message);
-        session.close(StatusCode.NORMAL,"I'm done");
+        System.out.println(" -downloading data");
+        File file = new File("training_set.csv");
+        FileWriter fileWriter = new FileWriter(file);
+        fileWriter.write(message);
+        fileWriter.close();
+        System.out.println(" -writing data to training_set.csv completed");
+        session.close(StatusCode.NORMAL,"|Edge Server| -> I'm done");
     }
 
 }
