@@ -1,4 +1,4 @@
-*.iml
+.iml
 .gradle
 /local.properties
 /.idea/workspace.xml
@@ -7,3 +7,11 @@
 /build
 /captures
 .externalNativeBuild
+/.idea/encodings.xml
+IdeaProjects-ditapp.iml
+/app/IdeaProjects-ditapp-app.iml
+/app/app.iml
+/app/ditapp-app.iml
+ditapp.iml
+linoukth-IdeaProjects-ditapp.iml
+/out
