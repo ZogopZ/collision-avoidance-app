@@ -13,7 +13,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
 
-@WebSocket(maxTextMessageSize = 64 * 1024)
+@WebSocket(maxTextMessageSize = 64 * 1024) //Set maximum message size.
 public class EdgeSocket
 {
     private final CountDownLatch closeLatch;
@@ -34,33 +34,33 @@ public class EdgeSocket
     public void onClose(int statusCode, String reason)
     {
         this.session = null;
-        this.closeLatch.countDown(); // trigger latch
+        this.closeLatch.countDown(); //Trigger latch.
     }
 
-    @OnWebSocketConnect
+    @OnWebSocketConnect //On connection with websocket server.
     public void onConnect(Session session)
     {
         System.out.println(" -connect ok!");
         this.session = session;
-        try
+        try //Send a simple hello message.
         {
             Future<Void> fut;
-            fut = session.getRemote().sendStringByFuture("|Edge Server| -> Hello Backhaul Server");
-            fut.get(2,TimeUnit.SECONDS); // wait for send to complete.
+            fut = session.getRemote().sendStringByFuture("(Edge Server says) Hello Backhaul Server");
+            fut.get(2,TimeUnit.SECONDS); //Wait for send to complete.
         }
         catch (Throwable t) { t.printStackTrace(); }
     }
 
-    @OnWebSocketMessage
+    @OnWebSocketMessage //On message from websocket server.
     public void onMessage(String message) throws IOException
     {
         System.out.println(" -downloading data");
-        File file = new File("training_set.csv");
+        File file = new File("training_set.csv"); //Create an empty training_set.csv file.
         FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(message);
+        fileWriter.write(message); //Write the received message (backhaul's training set file) to the empty file.
         fileWriter.close();
         System.out.println(" -writing data to training_set.csv completed");
-        session.close(StatusCode.NORMAL,"|Edge Server| -> I'm done");
+        session.close(StatusCode.NORMAL,"|Edge Server| -> I'm done"); //Send close sequence with message to server.
     }
 
 }
