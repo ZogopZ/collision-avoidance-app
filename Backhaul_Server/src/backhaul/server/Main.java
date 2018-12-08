@@ -6,8 +6,9 @@ public class Main {
     {
         try
         {
+            System.out.println("|Data Extraction|");
             DataExtraction.extract();
-            //BackhaulSocket.connect();
+            BackhaulSocket.connect();
         }
         catch (Throwable t) { t.printStackTrace(); }
     }

@@ -11,7 +11,9 @@ public class BackhaulSocket
 
     public static void connect() throws Exception
     {
-        System.out.println("-websocket server initialization");
+        System.out.println("|Websocket Server Initialization|");
+        System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.StdErrLog");
+        System.setProperty("org.eclipse.jetty.LEVEL", "OFF");
 
         Server server = new Server(8080);
         WebSocketHandler wsHandler = new WebSocketHandler()
@@ -24,13 +26,13 @@ public class BackhaulSocket
         };
         server.setHandler(wsHandler);
         server.start();
-        System.out.println("-waiting for edge server...");
+        System.out.println(" -waiting for edge server...");
         while (serverStop == 0)
         {
             Thread.sleep(1000);
         }
         Thread.sleep(4000);
-        System.out.println("-websocket server will now shut down");
+        System.out.println(" -websocket server will now shut down");
         server.stop();
     }
 

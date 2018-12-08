@@ -15,13 +15,21 @@ public class DataExtraction
         List<Double> list = new ArrayList<Double>();
 
 
-        File[] directory = new File("Training_Set").listFiles();
+        File directory = new File("Training_Set");
+        System.out.println(" -listing all files included in directory " + directory);
+        Thread.sleep(1000);
+        File[] directoryContents = new File(directory.getPath()).listFiles();
         File resultsFile = new File("training_set.csv");
+        System.out.println(" -creating empty file " + resultsFile);
+        Thread.sleep(1000);
         FileOutputStream nullifier = new FileOutputStream(resultsFile);
         BufferedWriter resultsWriter = new BufferedWriter(new FileWriter(resultsFile));
 
-        for (File file : directory)
+        System.out.print(" -extracting data and calculating entropies");
+        for (File file : directoryContents)
         {
+            System.out.print(".");
+            Thread.sleep(10);
             int lineNo = -1;
             int columnNo;
 
@@ -69,8 +77,12 @@ public class DataExtraction
                 resultsWriter.write(Double.toString(Entropy.calculateEntropy(vector)));
                 resultsWriter.write(",");
             }
+
             resultsWriter.newLine();
         }
+        System.out.printf("\n -writing new data to " + resultsFile.getName());
+        Thread.sleep(1000);
+        System.out.printf("\n -%s file is ready for upload\n", resultsFile.getName());
         resultsWriter.close();
     }
 }
