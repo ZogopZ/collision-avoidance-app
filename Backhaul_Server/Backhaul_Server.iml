@@ -16,5 +16,19 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$USER_HOME$/libs/JavaMi-Toolbox" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="file://$USER_HOME$/libs/JavaMi-Toolbox" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="file://$USER_HOME$/libs/JavaMi-Toolbox" />
+        </SOURCES>
+        <jarDirectory url="file://$USER_HOME$/libs/JavaMi-Toolbox" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
 </module>
