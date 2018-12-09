@@ -38,13 +38,14 @@ public class BackhaulSocketServer
     public void onMessage(Session session, String message) throws IOException, InterruptedException {
         System.out.println(" -incoming message ---> " + message);
         Thread.sleep(1000);
-        File file = new File("training_set.csv");
+        File file = new File("training_set.csv"); //Get the generated training_set.csv file.
         System.out.printf(" -uploading %s file to edge server\n", file.getName());
         String contents = new String(Files.readAllBytes(Paths.get(file.getName())));
-        session.getRemote().sendString(contents);
+         //Create a string with the training set data to be uploaded.
+        session.getRemote().sendString(contents); //Upload training_set.csv file to edge server.
         Thread.sleep(2500);
         System.out.printf(" -%s file was uploaded successfully\n", file.getName());
         Thread.sleep(1000);
-        BackhaulSocket.serverStop = 1;
+        BackhaulSocket.serverStop = 1; //Websocket server flag for shutdown function.
     }
 }

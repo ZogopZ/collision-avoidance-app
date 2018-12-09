@@ -8,6 +8,7 @@ public class Main {
         {
             System.out.println("|Data Extraction|");
             DataExtraction.extract();
+            System.out.println("|Websocket Server Initialization|");
             BackhaulSocket.connect();
         }
         catch (Throwable t) { t.printStackTrace(); }
