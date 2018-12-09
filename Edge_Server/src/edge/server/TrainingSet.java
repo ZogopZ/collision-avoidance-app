@@ -5,7 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
-public class TrainingSet {
+public class TrainingSet
+{
 
     public static void localClassify(File trainingSet)
     {
@@ -18,7 +19,7 @@ public class TrainingSet {
             {
                 lines.add(str); //Add each line to an array list.
             }
-            String[] linesArray = lines.toArray(new String[lines.size()]);
+            String[] linesArray = lines.toArray(new String[lines.size()]); //Classify data.
 //            for (String gen : linesArray)
 //            {
 //                System.out.printf("\n");
