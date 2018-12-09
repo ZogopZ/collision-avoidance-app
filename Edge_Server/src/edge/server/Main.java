@@ -11,6 +11,5 @@ public class Main
         System.out.println("|File Classification|");
         File file = new File("training_set.csv");
         TrainingSet.localClassify(file); //Locally classify downloaded file.
-
     }
 }

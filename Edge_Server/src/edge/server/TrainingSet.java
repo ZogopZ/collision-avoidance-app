@@ -19,7 +19,8 @@ public class TrainingSet
             {
                 lines.add(str); //Add each line to an array list.
             }
-            String[] linesArray = lines.toArray(new String[lines.size()]); //Classify data.
+            in.close();
+            String[] linesArray = lines.toArray(new String[lines.size()]);
 //            for (String gen : linesArray)
 //            {
 //                System.out.printf("\n");
