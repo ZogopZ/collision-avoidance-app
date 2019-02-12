@@ -1,5 +1,9 @@
 /.idea/workspace.xml
 /.idea/libraries
+Backhaul_Server/.idea/
+Backhaul_Server/training_set.csv
+Edge_Server/.idea/
+Edge_Server/traininig_set.csv
 .DS_Store
 /build
 /captures
