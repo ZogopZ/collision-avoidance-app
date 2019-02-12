@@ -1,10 +1,7 @@
-/.idea/workspace.xml
-/.idea/libraries
+.idea/
 Backhaul_Server/.idea/
+Backhaul_Server/target
 Backhaul_Server/training_set.csv
 Edge_Server/.idea/
+Edge_Server/target
 Edge_Server/traininig_set.csv
-.DS_Store
-/build
-/captures
-.externalNativeBuild
