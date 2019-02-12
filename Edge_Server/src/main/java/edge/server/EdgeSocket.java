@@ -1,9 +1,7 @@
 package edge.server;
 
 import java.io.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
@@ -16,9 +14,10 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 @WebSocket(maxTextMessageSize = 64 * 1024) //Set maximum message size.
 public class EdgeSocket
 {
+    static int nextMessage = 0;
     private final CountDownLatch closeLatch;
     @SuppressWarnings("unused")
-    private Session session;
+    static Session session;
 
     public EdgeSocket()
     {
@@ -42,25 +41,26 @@ public class EdgeSocket
     {
         System.out.println(" -connect ok!");
         this.session = session;
-        try //Send a simple hello message.
-        {
-            Future<Void> fut;
-            fut = session.getRemote().sendStringByFuture("(Edge Server says) Hello Backhaul Server");
-            fut.get(2,TimeUnit.SECONDS); //Wait for send to complete.
-        }
-        catch (Throwable t) { t.printStackTrace(); }
+        EdgeSocketClient.sendMessage("request");
     }
 
     @OnWebSocketMessage //On message from websocket server.
     public void onMessage(String message) throws IOException
     {
-        System.out.println(" -downloading data");
-        File file = new File("training_set.csv"); //Create an empty training_set.csv file.
-        FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(message); //Write the received message (backhaul's training set file) to the empty file.
-        fileWriter.close();
-        System.out.println(" -writing data to training_set.csv completed");
-        session.close(StatusCode.NORMAL,"|Edge Server| -> I'm done"); //Send close sequence with message to server.
+        if (nextMessage == 1) //Flag for file downloading is true.
+        {
+            System.out.println(" -downloading data");
+            File file = new File("training_set.csv"); //Create an empty training_set.csv file.
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(message); //Write the received message (backhaul's training set file) to the empty file.
+            fileWriter.close();
+            System.out.println(" -writing data to training_set.csv completed");
+            nextMessage = 0;
+        }
+        if (message.equals("uploading")) //Next message to be received is the training_set.csv file.
+        {
+            nextMessage = 1;
+        }
     }
 
 }

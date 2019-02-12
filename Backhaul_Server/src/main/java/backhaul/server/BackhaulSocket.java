@@ -3,6 +3,12 @@ package backhaul.server;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.api.Session;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 public class BackhaulSocket
@@ -33,6 +39,19 @@ public class BackhaulSocket
         Thread.sleep(4000);
         System.out.println(" -websocket server will now shut down");
         server.stop(); //Websocket server shutdown.
+    }
+
+    public static void sendMessage(Session session, String message)
+    {
+        try
+        {
+            Future<Void> future;
+            future = session.getRemote().sendStringByFuture(message); //Send message to edge server.
+            future.get(2, TimeUnit.SECONDS); //Wait for message being sent.
+        }
+        catch (InterruptedException e) { e.printStackTrace(); }
+        catch (ExecutionException e) { e.printStackTrace(); }
+        catch (TimeoutException e) { e.printStackTrace(); }
     }
 
 }

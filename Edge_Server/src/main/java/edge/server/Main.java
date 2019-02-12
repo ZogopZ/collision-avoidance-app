@@ -12,5 +12,8 @@ public class Main
         System.out.println("|File Classification|");
         File file = new File("training_set.csv");
         TrainingSet.localClassify(file); //Locally classify downloaded file.
+        String logMessage = "logs:Dummy log message";
+        EdgeSocketClient.sendMessage(logMessage);
+        EdgeSocketClient.disconnect(); //Disconnect from websocket server.
     }
 }
