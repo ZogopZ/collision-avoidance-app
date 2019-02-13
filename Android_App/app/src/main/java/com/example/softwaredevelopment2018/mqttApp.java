@@ -18,9 +18,11 @@ public class mqttApp implements MqttCallback {
     static final String BROKER_URL = "tcp://192.168.1.5:8181";
     static final String M2MIO_DOMAIN = "<Insert m2m.io domain here>";
     static final String M2MIO_STUFF = "things";
-    static final String M2MIO_THING = "<Unique device ID>";
-    static final String M2MIO_USERNAME = "vclqgmpy";
-    static final String M2MIO_PASSWORD_MD5 = "HI4AHWRtaNGc";
+    static final String M2MIO_THING = " ";
+//    static final String M2MIO_USERNAME = "vclqgmpy";
+//    static final String M2MIO_PASSWORD_MD5 = "HI4AHWRtaNGc";
+    static final String M2MIO_USERNAME = "user1";
+    static final String M2MIO_PASSWORD_MD5 = "pleaseEnter";
 
     // the following two flags control whether this example is a publisher, a subscriber or both
     static final Boolean subscriber = true;
@@ -81,7 +83,8 @@ public class mqttApp implements MqttCallback {
      */
     public void runClient() {
         // setup MQTT Client
-        String clientID = M2MIO_THING;
+//        String clientID = M2MIO_THING;
+        String clientID = "user1";
         connOpt = new MqttConnectOptions();
 
         connOpt.setCleanSession(true);
@@ -103,7 +106,8 @@ public class mqttApp implements MqttCallback {
 
         // setup topic
         // topics on m2m.io are in the form <domain>/<stuff>/<thing>
-        String myTopic = M2MIO_DOMAIN + "/" + M2MIO_STUFF + "/" + M2MIO_THING;
+//        String myTopic = M2MIO_DOMAIN + "/" + M2MIO_STUFF + "/" + M2MIO_THING;
+        String myTopic = "t1";
         MqttTopic topic = myClient.getTopic(myTopic);
 
         // subscribe to topic if subscriber

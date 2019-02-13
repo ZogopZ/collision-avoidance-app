@@ -1,8 +1,10 @@
-.idea/
-Backhaul_Server/.idea/
+.idea
+Android_App/.idea
+Android_App/.gradle
+Backhaul_Server/.idea
 Backhaul_Server/target
 Backhaul_Server/training_set.csv
-Edge_Server/.idea/
+Edge_Server/.idea
 Edge_Server/target
 Edge_Server/traininig_set.csv
 Edge_Server/EdgeServer-tcplocalhost8181

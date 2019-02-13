@@ -2,11 +2,7 @@ package com.example.softwaredevelopment2018;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -18,42 +14,32 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
-import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.UnsupportedEncodingException;
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
 {
 
 //    static String MQTTHOST = "tcp://m23.cloudmqtt.com:19840";
-    static String MQTTHOST = "tcp://192.168.1.5:8181";
-    static String USERNAME = "vclqgmpy";
-    static String PASSWORD = "HI4AHWRtaNGc";
+    static String MQTTHOST = "tcp://192.168.1.6:8181";
+    static String USERNAME = "user1";
+    static String PASSWORD = "pleaseEnter";
 
 
     MqttAndroidClient client;
@@ -81,7 +67,8 @@ public class MainActivity extends AppCompatActivity
 
         btn1 = (Button) findViewById(R.id.btn1);
 
-        String clientId = MqttClient.generateClientId();
+//        String clientId = MqttClient.generateClientId();
+        String clientId = "user1";
         client = new MqttAndroidClient(this.getApplicationContext(), MQTTHOST, clientId);
 
         Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -171,7 +158,7 @@ public class MainActivity extends AppCompatActivity
                 WifiInfo info;
                 info = manager.getConnectionInfo();
                 @SuppressLint("HardwareIds") String payload = info.getMacAddress();
-                String topic = "Mac Address";
+                String topic = "t1";
                 try
                 {
                     byte[] encodedPayload = payload.getBytes("UTF-8");
@@ -317,7 +304,8 @@ public class MainActivity extends AppCompatActivity
 
     public void setSubscription()
     {
-        String topic = "Mac Address";
+        final String topic = MyInfo.getMacAddress();
+        System.out.println("" + topic);
         int qos = 1;
         try
         {
@@ -329,6 +317,12 @@ public class MainActivity extends AppCompatActivity
                 {
                     // The message was published
                     myRingtone.play();
+                    try
+                    {
+                        client.publish(topic, new MqttMessage(topic.getBytes()));
+                    }
+                    catch (MqttPersistenceException e) { e.printStackTrace(); }
+                    catch (MqttException e) { e.printStackTrace(); }
                 }
 
                 @Override
@@ -345,4 +339,5 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
     }
+
 }
