@@ -2,8 +2,11 @@ package com.example.softwaredevelopment2018;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -15,7 +18,9 @@ import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -28,15 +33,14 @@ import android.widget.Toast;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.*;
 
-import java.io.UnsupportedEncodingException;
-import java.net.NetworkInterface;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+
+import static java.sql.Types.NULL;
+
 
 public class MainActivity extends AppCompatActivity
 {
 
-//    static String MQTTHOST = "tcp://m23.cloudmqtt.com:19840";
     static String MQTTHOST = "tcp://192.168.1.6:8181";
     static String USERNAME = "user1";
     static String PASSWORD = "pleaseEnter";
@@ -78,9 +82,9 @@ public class MainActivity extends AppCompatActivity
         options.setUserName(USERNAME);
         options.setPassword(PASSWORD.toCharArray());
 
-                //periodical check of internet connection source: https://stackoverflow.com/questions/10350449/how-to-check-the-internet-connection-periodically-in-whole-application
+        //periodical check of internet connection source: https://stackoverflow.com/questions/10350449/how-to-check-the-internet-connection-periodically-in-whole-application
 
-                BroadcastReceiver mConnReceiver = new BroadcastReceiver()
+        BroadcastReceiver mConnReceiver = new BroadcastReceiver()
         {
             public void onReceive(Context context, Intent intent)
             {
@@ -121,10 +125,9 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(MainActivity.this, "connection failed", Toast.LENGTH_LONG).show();
                 }
             });
-        } catch (MqttException e)
-        {
-            e.printStackTrace();
         }
+        catch (MqttException e) { e.printStackTrace(); }
+
 
         client.setCallback(new MqttCallback()
         {
@@ -165,10 +168,8 @@ public class MainActivity extends AppCompatActivity
                     MqttMessage message = new MqttMessage(encodedPayload);
                     client.publish(topic, message);
                     setSubscription();
-                } catch (UnsupportedEncodingException | MqttException e)
-                {
-                    e.printStackTrace();
                 }
+                catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
             }
         });
         WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -305,10 +306,16 @@ public class MainActivity extends AppCompatActivity
     public void setSubscription()
     {
         final String topic = MyInfo.getMacAddress();
-        System.out.println("" + topic);
-        int qos = 1;
+        String[] list;
         try
         {
+            AssetManager assetManager = getAssets(); //Get assets folder.
+            String[] files = assetManager.list(""); //List all files in assets folder.
+            for(String file : files)
+                System.out.println("" + file);
+            System.out.println("" + topic);
+
+            int qos = 1;
             IMqttToken subToken = client.subscribe(topic, qos);
             subToken.setActionCallback(new IMqttActionListener()
             {
@@ -320,6 +327,7 @@ public class MainActivity extends AppCompatActivity
                     try
                     {
                         client.publish(topic, new MqttMessage(topic.getBytes()));
+                         //Publish mac address to topic.
                     }
                     catch (MqttPersistenceException e) { e.printStackTrace(); }
                     catch (MqttException e) { e.printStackTrace(); }
@@ -334,10 +342,10 @@ public class MainActivity extends AppCompatActivity
 
                 }
             });
-        } catch (MqttException e)
-        {
-            e.printStackTrace();
         }
+        catch (MqttException e) { e.printStackTrace(); }
+        catch (IOException e) { e.printStackTrace(); }
+
     }
 
 }

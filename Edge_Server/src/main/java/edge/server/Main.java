@@ -13,7 +13,7 @@ public class Main
 //        System.out.println("|File Classification|");
 //        File file = new File("training_set.csv");
 //        TrainingSet.localClassify(file); //Locally classify downloaded file.
-        System.out.println("|Mqtt Broker Initialization|");
+//        System.out.println("|Mqtt Broker Initialization|");
         Mqtt.startBroker();
         System.out.println("|Edge Server Mqtt Client Initialization|");
         Mqtt.startClient();
