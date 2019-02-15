@@ -84,7 +84,7 @@ public class Tools
 //                    Tools.myRingtone.play();
                     try
                     {
-                        client.publish(Tools.topic, new MqttMessage("ANDROID_ID subscribed".getBytes()));
+                        client.publish(Tools.topic, new MqttMessage(("Android with ID: " + MainActivity.androidID + " just subscribed").getBytes()));
                         //Publish mac address to topic.
                     }
                     catch (MqttPersistenceException e)

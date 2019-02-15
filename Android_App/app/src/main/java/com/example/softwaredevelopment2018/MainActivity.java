@@ -5,13 +5,14 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.location.*;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.*;
 import android.widget.Button;
@@ -34,14 +35,14 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_FINE_LOCATION = 200;
     private static final int REQUEST_PHONE_STATE = 201;
     LocationTrack locationTrack;
-
+    public static String androidID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
+        this.registerReceiver(this.mConnReceiver,
+                new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         setContentView(R.layout.activity_main);
 
         final Context context = this.getApplicationContext();
@@ -53,10 +54,6 @@ public class MainActivity extends AppCompatActivity
         Tools.getRingtone(context);
 //        Tools.getAndroidID(context);
 //        Tools.checkConnection(context);
-
-//        Intent intent=new Intent("android.location.GPS_ENABLED_CHANGE");
-//        intent.putExtra("enabled", true);
-//        sendBroadcast(intent);
 
         subText = findViewById(R.id.subText);
         Button macButton = findViewById(R.id.macButton);
@@ -80,7 +77,7 @@ public class MainActivity extends AppCompatActivity
                 public void onSuccess(IMqttToken asyncActionToken)
                 {
                     Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_LONG).show();
-                    System.out.println("------CONNECTED TO MQTT");
+                    Log.i("***INFO***", "Android client connected to MQTT broker");
                     Tools.myRingtone.play();
                 }
 
@@ -145,8 +142,9 @@ public class MainActivity extends AppCompatActivity
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
                 }
                 while (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {}
-                String android_id = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-                Log.i("***INFO***", "Current android's ID is: " + android_id);
+                TelephonyManager telephoneMngr = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+                androidID = telephoneMngr.getImei();
+                Log.i("***INFO***", "Current android's ID is: " + androidID);
                 try
                 {
                     String[] list;
@@ -154,7 +152,7 @@ public class MainActivity extends AppCompatActivity
                     String[] files = assetManager.list(""); //List all files in assets folder.
 //                    for(String file : files)
 //                        System.out.println("" + file);
-                    client.publish(Tools.topic, new MqttMessage("FILE to be sent".getBytes()));
+                    client.publish(Tools.topic, new MqttMessage(androidID.getBytes()));
                 }
                 catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
                 catch (IOException e) { e.printStackTrace(); }
@@ -189,15 +187,20 @@ public class MainActivity extends AppCompatActivity
                 locationTrack = new LocationTrack(MainActivity.this);
                 if (locationTrack.canGetLocation())
                 {
-                    double longitude = locationTrack.getLongitude();
-                    double latitude = locationTrack.getLatitude();
-                    Toast.makeText(getApplicationContext(), "Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude), Toast.LENGTH_SHORT).show();
-                    Log.i("***INFO***", "Longitude: " + longitude + "Latitude: " + latitude);
-                    System.out.println("---" + Double.toString(longitude) + Double.toString(latitude));
+                    Location location = LocationTrack.myLocation;
+                    String latitude = Double.toString(location.getLatitude());
+                    String longitude = Double.toString(location.getLongitude());
+                    Toast.makeText(getApplicationContext(), "Latitude:" + latitude + "\nLongitude:" + longitude, Toast.LENGTH_SHORT).show();
+                    Log.i("***LOCATION_INFO***", "Latitude: " + latitude + " Longitude: " + longitude);
+                    try
+                    {
+                        client.publish(Tools.topic, new MqttMessage(("" + latitude + ", " + longitude).getBytes()));
+                    }
+                    catch (MqttException e ) { e.printStackTrace(); }
                 }
                 else
                 {
-                    locationTrack.showSettingsAlert();
+//                    locationTrack.showSettingsAlert();
                 }
             }
         });
@@ -220,7 +223,6 @@ public class MainActivity extends AppCompatActivity
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
                     }
                 });
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
             }
         }
         else if (requestCode == REQUEST_PHONE_STATE)
@@ -237,7 +239,6 @@ public class MainActivity extends AppCompatActivity
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
                     }
                 });
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
             }
         }
     }
