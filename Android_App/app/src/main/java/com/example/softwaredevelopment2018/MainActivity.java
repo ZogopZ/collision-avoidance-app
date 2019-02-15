@@ -1,31 +1,19 @@
 package com.example.softwaredevelopment2018;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
+import android.location.*;
 import android.os.Bundle;
-import android.os.Environment;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
+import android.util.Log;
+import android.view.*;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,76 +23,53 @@ import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.*;
 
-import static java.sql.Types.NULL;
-
 
 public class MainActivity extends AppCompatActivity
 {
 
-    static String MQTTHOST = "tcp://192.168.1.6:8181";
-    static String USERNAME = "user1";
-    static String PASSWORD = "pleaseEnter";
-
-
-    MqttAndroidClient client;
-
-    Ringtone myRingtone;
-
-    private Button btn1;
-    private Button submit;
-
-    private LocationManager locationManager;
+    private MqttAndroidClient client;
     private LocationListener locationListener;
     TextView subText;
-
     private BroadcastReceiver mConnReceiver;
+    private static final int REQUEST_FINE_LOCATION = 200;
+    private static final int REQUEST_PHONE_STATE = 201;
+    LocationTrack locationTrack;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
-        this.registerReceiver(this.mConnReceiver,
-                new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         setContentView(R.layout.activity_main);
 
-        subText = (TextView) findViewById(R.id.subText);
-
-        btn1 = (Button) findViewById(R.id.btn1);
-
-//        String clientId = MqttClient.generateClientId();
+        final Context context = this.getApplicationContext();
         String clientId = "user1";
-        client = new MqttAndroidClient(this.getApplicationContext(), MQTTHOST, clientId);
+        String mqttHost = "tcp://192.168.1.6:8181";
+        client = new MqttAndroidClient(context, mqttHost, clientId);
 
-        Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        myRingtone = RingtoneManager.getRingtone(getApplicationContext(), uri);
+        Tools.getMacAddress();
+        Tools.getRingtone(context);
+//        Tools.getAndroidID(context);
+//        Tools.checkConnection(context);
+
+//        Intent intent=new Intent("android.location.GPS_ENABLED_CHANGE");
+//        intent.putExtra("enabled", true);
+//        sendBroadcast(intent);
+
+        subText = findViewById(R.id.subText);
+        Button macButton = findViewById(R.id.macButton);
+        Button gpsButton = findViewById(R.id.gpsButton);
+        Button fileButton = findViewById(R.id.fileButton);
+        Button subscribeButton = findViewById(R.id.subscribeButton);
+
 
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(USERNAME);
-        options.setPassword(PASSWORD.toCharArray());
 
-        //periodical check of internet connection source: https://stackoverflow.com/questions/10350449/how-to-check-the-internet-connection-periodically-in-whole-application
-
-        BroadcastReceiver mConnReceiver = new BroadcastReceiver()
-        {
-            public void onReceive(Context context, Intent intent)
-            {
-                boolean noConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-                String reason = intent.getStringExtra(ConnectivityManager.EXTRA_REASON);
-                boolean isFailover = intent.getBooleanExtra(ConnectivityManager.EXTRA_IS_FAILOVER, false);
-
-                NetworkInfo currentNetworkInfo = (NetworkInfo) intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-                NetworkInfo otherNetworkInfo = (NetworkInfo) intent.getParcelableExtra(ConnectivityManager.EXTRA_OTHER_NETWORK_INFO);
-
-                if (currentNetworkInfo.isConnected())
-                {
-                    Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_LONG).show();
-                } else
-                {
-                    Toast.makeText(getApplicationContext(), "Not Connected", Toast.LENGTH_LONG).show();
-                }
-            }
-        };
-
+        ActionBar actionBar = getSupportActionBar();
+        if(null != actionBar)
+            actionBar.hide();
 
         try
         {
@@ -115,8 +80,8 @@ public class MainActivity extends AppCompatActivity
                 public void onSuccess(IMqttToken asyncActionToken)
                 {
                     Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_LONG).show();
-                    setSubscription();
-                    myRingtone.play();
+                    System.out.println("------CONNECTED TO MQTT");
+                    Tools.myRingtone.play();
                 }
 
                 @Override
@@ -141,7 +106,7 @@ public class MainActivity extends AppCompatActivity
             public void messageArrived(String topic, MqttMessage message) throws Exception
             {
                 subText.setText(new String(message.getPayload()));
-                myRingtone.play();
+                Tools.myRingtone.play();
             }
 
             @Override
@@ -151,86 +116,130 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        btn1.setOnClickListener(new View.OnClickListener()
+
+        /********************
+         *     BUTTONS      *
+         ********************/
+        macButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                assert manager != null;
-                WifiInfo info;
-                info = manager.getConnectionInfo();
-                @SuppressLint("HardwareIds") String payload = info.getMacAddress();
-                String topic = "t1";
                 try
                 {
-                    byte[] encodedPayload = payload.getBytes("UTF-8");
-                    MqttMessage message = new MqttMessage(encodedPayload);
-                    client.publish(topic, message);
-                    setSubscription();
+                    MqttMessage message = new MqttMessage(Tools.topic.getBytes());
+                    client.publish(Tools.topic, message);
                 }
-                catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
+                catch (MqttException e) { e.printStackTrace(); }
             }
         });
-        WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        assert manager != null;
-        WifiInfo info;
-        info = manager.getConnectionInfo();
-        @SuppressLint("HardwareIds") String payload = info.getMacAddress();
-        //if (payload == "02:00:00:00:00:00") {
-        //System.out.println("your device");
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationListener = new LocationListener()
+
+        fileButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
-            public void onLocationChanged(Location location)
+            public void onClick(View v)
             {
-                String gpslocation = (" " + location.getLatitude() + " " + location.getLongitude() + " ");
-                String topic = "GPS Location";
-
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED )
+                {
+                    Log.w("***PERMISSIONS***", "READ_PHONE_STATE permission needed. Will try to grant it.");
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
+                }
+                while (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {}
+                String android_id = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+                Log.i("***INFO***", "Current android's ID is: " + android_id);
                 try
                 {
-                    byte[] encodedPayload = gpslocation.getBytes("UTF-8");
-                    MqttMessage message = new MqttMessage(encodedPayload);
-                    client.publish(topic, message);
-                } catch (UnsupportedEncodingException | MqttException e)
-                {
-                    e.printStackTrace();
+                    String[] list;
+                    AssetManager assetManager = getAssets(); //Get assets folder.
+                    String[] files = assetManager.list(""); //List all files in assets folder.
+//                    for(String file : files)
+//                        System.out.println("" + file);
+                    client.publish(Tools.topic, new MqttMessage("FILE to be sent".getBytes()));
                 }
-
-
+                catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
+                catch (IOException e) { e.printStackTrace(); }
             }
+        });
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras)
-            {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider)
-            {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider)
-            {
-
-            }
-        };
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        subscribeButton.setOnClickListener(new View.OnClickListener()
         {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+            @Override
+            public void onClick(View v)
+            {
+                Tools.subscribe(client);
+                try
+                {
+                    client.subscribe(Tools.topic, 1);
+                }
+                catch (MqttException e) { e.printStackTrace(); }
+            }
+        });
+
+        gpsButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED )
+                {
+                    Log.w("***PERMISSIONS***", "ACCESS_FINE_LOCATION permission needed. Will try to grant it.");
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+                }
+                while (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {}
+                locationTrack = new LocationTrack(MainActivity.this);
+                if (locationTrack.canGetLocation())
+                {
+                    double longitude = locationTrack.getLongitude();
+                    double latitude = locationTrack.getLatitude();
+                    Toast.makeText(getApplicationContext(), "Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude), Toast.LENGTH_SHORT).show();
+                    Log.i("***INFO***", "Longitude: " + longitude + "Latitude: " + latitude);
+                    System.out.println("---" + Double.toString(longitude) + Double.toString(latitude));
+                }
+                else
+                {
+                    locationTrack.showSettingsAlert();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+    {
+        if (requestCode == REQUEST_FINE_LOCATION)
+        {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION))
+            { //Show an explanation to the user *asynchronously*
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage("This permission is important for the application.")
+                        .setTitle("Important permission required");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+                    }
+                });
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+            }
         }
-        locationManager.requestLocationUpdates("gps", 5000, 0, locationListener);
+        else if (requestCode == REQUEST_PHONE_STATE)
+        {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.READ_PHONE_STATE))
+            { //Show an explanation to the user *asynchronously*
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage("This permission is important for the application.")
+                        .setTitle("Important permission required");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
+                    }
+                });
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
+            }
+        }
     }
 
     //code for menu creation and use
@@ -303,49 +312,32 @@ public class MainActivity extends AppCompatActivity
         alertDialog.show();
     }
 
-    public void setSubscription()
-    {
-        final String topic = MyInfo.getMacAddress();
-        String[] list;
-        try
-        {
-            AssetManager assetManager = getAssets(); //Get assets folder.
-            String[] files = assetManager.list(""); //List all files in assets folder.
-            for(String file : files)
-                System.out.println("" + file);
-            System.out.println("" + topic);
+    public void onLocationChanged(Location location) {
+//        Geocoder geocoder;
+//        List<Address> addresses;
+//        geocoder = new Geocoder(this, Locale.getDefault());
 
-            int qos = 1;
-            IMqttToken subToken = client.subscribe(topic, qos);
-            subToken.setActionCallback(new IMqttActionListener()
-            {
-                @Override
-                public void onSuccess(IMqttToken asyncActionToken)
-                {
-                    // The message was published
-                    myRingtone.play();
-                    try
-                    {
-                        client.publish(topic, new MqttMessage(topic.getBytes()));
-                         //Publish mac address to topic.
-                    }
-                    catch (MqttPersistenceException e) { e.printStackTrace(); }
-                    catch (MqttException e) { e.printStackTrace(); }
-                }
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
 
-                @Override
-                public void onFailure(IMqttToken asyncActionToken,
-                                      Throwable exception)
-                {
-                    // The subscription could not be performed, maybe the user was not
-                    // authorized to subscribe on the specified topic e.g. using wildcards
 
-                }
-            });
-        }
-        catch (MqttException e) { e.printStackTrace(); }
-        catch (IOException e) { e.printStackTrace(); }
-
+//        Log.e("latitude", "latitude--" + latitude);
+//        try {
+//            Log.e("latitude", "inside latitude--" + latitude);
+//            addresses = geocoder.getFromLocation(latitude, longitude, 1);
+//            if (addresses != null && addresses.size() > 0) {
+//                String address = addresses.get(0).getAddressLine(0);
+//                String city = addresses.get(0).getLocality();
+//                String state = addresses.get(0).getAdminArea();
+//                String country = addresses.get(0).getCountryName();
+//                String postalCode = addresses.get(0).getPostalCode();
+//                String knownName = addresses.get(0).getFeatureName();
+//
+//                ro_gps_location.setText(state + " , " + city + " , " + country);
+//                ro_address.setText(address + " , " + knownName + " , " + postalCode);
+//            }
+//        }
+//        catch (IOException e) { e.printStackTrace(); }
     }
 
 }

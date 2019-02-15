@@ -1,5 +1,6 @@
 package mqttApp;
 
+import com.example.softwaredevelopment2018.Tools;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -9,54 +10,42 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttTopic;
 
-public class mqttApp implements MqttCallback {
+public class mqttApp implements MqttCallback
+{
 
     MqttClient myClient;
     MqttConnectOptions connOpt;
 
-//    static final String BROKER_URL = "tcp://m23.cloudmqtt.com:19840";
     static final String BROKER_URL = "tcp://192.168.1.5:8181";
-    static final String M2MIO_DOMAIN = "<Insert m2m.io domain here>";
-    static final String M2MIO_STUFF = "things";
-    static final String M2MIO_THING = " ";
-//    static final String M2MIO_USERNAME = "vclqgmpy";
-//    static final String M2MIO_PASSWORD_MD5 = "HI4AHWRtaNGc";
-    static final String M2MIO_USERNAME = "user1";
-    static final String M2MIO_PASSWORD_MD5 = "pleaseEnter";
 
-    // the following two flags control whether this example is a publisher, a subscriber or both
     static final Boolean subscriber = true;
     static final Boolean publisher = true;
 
-    /**
-     *
-     * connectionLost
+
+    /***********************************************************
      * This callback is invoked upon losing the MQTT connection.
-     *
-     */
+     ***********************************************************/
     @Override
-    public void connectionLost(Throwable t) {
+    public void connectionLost(Throwable t)
+    {
         System.out.println("Connection lost!");
-        // code to reconnect to the broker would go here if desired
+        //Code to reconnect to the broker would go here if desired
     }
 
-    /**
-     *
-     * deliveryComplete
-     * This callback is invoked when a message published by this client
+
+    /*******************************************************************
+     * This callback is invoked when a message published by this client.
      * is successfully received by the broker.
-     *
-     */
-    public void deliveryComplete(MqttDeliveryToken token) {
+     * *****************************************************************/
+    public void deliveryComplete(MqttDeliveryToken token)
+    {
         //System.out.println("Pub complete" + new String(token.getMessage().getPayload()));
     }
 
-    /**
-     *
-     * messageArrived
+
+    /*****************************************************************************
      * This callback is invoked when a message is received on a subscribed topic.
-     *
-     */
+     ****************************************************************************/
     public void messageArrived(MqttTopic topic, MqttMessage message) throws Exception {
         System.out.println("-------------------------------------------------");
         System.out.println("| Topic:" + topic.getName());
@@ -64,65 +53,53 @@ public class mqttApp implements MqttCallback {
         System.out.println("-------------------------------------------------");
     }
 
-    /**
-     *
+
+    /*******
      * MAIN
-     *
-     */
+     *******/
     public static void main(String[] args) {
         mqttApp smc = new mqttApp();
         smc.runClient();
     }
 
-    /**
-     *
-     * runClient
-     * The main functionality of this simple example.
-     * Create a MQTT client, connect to broker, pub/sub, disconnect.
-     *
-     */
-    public void runClient() {
-        // setup MQTT Client
-//        String clientID = M2MIO_THING;
-        String clientID = "user1";
-        connOpt = new MqttConnectOptions();
 
+    /****************************************************************
+     * Create a MQTT client, connect to broker, pub/sub, disconnect.
+     ****************************************************************/
+    public void runClient()
+    {
+        connOpt = new MqttConnectOptions();
         connOpt.setCleanSession(true);
         connOpt.setKeepAliveInterval(30);
-        connOpt.setUserName(M2MIO_USERNAME);
-        connOpt.setPassword(M2MIO_PASSWORD_MD5.toCharArray());
 
         // Connect to Broker
-        try {
-            myClient = new MqttClient(BROKER_URL, clientID);
+        try
+        {
+            myClient = new MqttClient(BROKER_URL, "Client_1");
             myClient.setCallback(this);
             myClient.connect(connOpt);
-        } catch (MqttException e) {
-            e.printStackTrace();
-            System.exit(-1);
         }
+        catch (MqttException e) { e.printStackTrace(); System.exit(-1); }
 
-        System.out.println("Connected to " + BROKER_URL);
-
-        // setup topic
-        // topics on m2m.io are in the form <domain>/<stuff>/<thing>
-//        String myTopic = M2MIO_DOMAIN + "/" + M2MIO_STUFF + "/" + M2MIO_THING;
-        String myTopic = "t1";
-        MqttTopic topic = myClient.getTopic(myTopic);
+        System.out.println("******Connected to " + BROKER_URL);
+        MqttTopic topic = myClient.getTopic(Tools.topic);
 
         // subscribe to topic if subscriber
-        if (subscriber) {
-            try {
-                int subQoS = 0;
-                myClient.subscribe(myTopic, subQoS);
-            } catch (Exception e) {
-                e.printStackTrace();
+        if (subscriber)
+        {
+            try
+            {
+                myClient.subscribe(Tools.topic, 1);
+                System.out.println("******Subscribed to topic " + Tools.topic);
             }
+            catch (Exception e) { e.printStackTrace(); }
         }
 
         // publish messages if publisher
-        if (publisher) {
-            for (int i=1; i<=4; i++) {
+        if (publisher)
+        {
+            for (int i=1; i<=4; i++)
+            {
                 String pubMsg = "{\"pubmsg\":" + i + "}";
                 int pubQoS = 0;
                 MqttMessage message = new MqttMessage(pubMsg.getBytes());
@@ -130,7 +107,7 @@ public class mqttApp implements MqttCallback {
                 message.setRetained(false);
 
                 // Publish the message
-                System.out.println("Publishing to topic \"" + topic + "\" qos " + pubQoS);
+                System.out.println("Publishing to topic \"" + Tools.topic + "\" qos " + pubQoS);
                 MqttDeliveryToken token = null;
                 try {
                     // publish message to broker
@@ -138,22 +115,22 @@ public class mqttApp implements MqttCallback {
                     // Wait until the message has been delivered to the broker
                     token.waitForCompletion();
                     Thread.sleep(100);
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+                catch (Exception e) { e.printStackTrace(); }
             }
         }
 
         // disconnect
-        try {
+        try
+        {
             // wait to ensure subscribed messages are delivered
-            if (subscriber) {
+            if (subscriber)
+            {
                 Thread.sleep(5000);
             }
             myClient.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+        catch (Exception e) { e.printStackTrace(); }
     }
 
     @Override
