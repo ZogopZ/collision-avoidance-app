@@ -61,15 +61,6 @@ public class LocationTrack extends Service implements LocationListener
                     }
                 });
             }
-//            }).addOnFailureListener(new OnFailureListener()
-//            {
-//                @Override
-//                public void onFailure(@NonNull Exception e)
-//                {
-//                    Log.d("***DEBUG***", "Error trying to get last GPS location");
-//                    e.printStackTrace();
-//                }
-//            });
         }
         catch (NullPointerException e) { e.printStackTrace(); }
         catch (SecurityException e) { Log.d("***DEBUG***", "" + e.getLocalizedMessage()); }
@@ -116,8 +107,12 @@ public class LocationTrack extends Service implements LocationListener
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-
+    public void onLocationChanged(Location location)
+    {
+        myLocation = location;
+        String message = "" + Double.toString(myLocation.getLatitude()) +  ", " + Double.toString(myLocation.getLongitude());
+        Log.i("***DEBUG***", "" + message);
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
     @Override

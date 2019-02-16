@@ -5,7 +5,6 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.location.*;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -23,17 +22,18 @@ import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.*;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity
 {
 
     private MqttAndroidClient client;
-    private LocationListener locationListener;
     TextView subText;
-    private BroadcastReceiver mConnReceiver;
     private static final int REQUEST_FINE_LOCATION = 200;
     private static final int REQUEST_PHONE_STATE = 201;
+    private Timer myTimer = new Timer();
     LocationTrack locationTrack;
     public static String androidID;
 
@@ -41,8 +41,6 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        this.registerReceiver(this.mConnReceiver,
-                new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         setContentView(R.layout.activity_main);
 
         final Context context = this.getApplicationContext();
@@ -50,16 +48,17 @@ public class MainActivity extends AppCompatActivity
         String mqttHost = "tcp://192.168.1.6:8181";
         client = new MqttAndroidClient(context, mqttHost, clientId);
 
+
         Tools.getMacAddress();
         Tools.getRingtone(context);
 //        Tools.getAndroidID(context);
 //        Tools.checkConnection(context);
 
-        subText = findViewById(R.id.subText);
+        Button subscribeButton = findViewById(R.id.subscribeButton);
         Button macButton = findViewById(R.id.macButton);
         Button gpsButton = findViewById(R.id.gpsButton);
         Button fileButton = findViewById(R.id.fileButton);
-        Button subscribeButton = findViewById(R.id.subscribeButton);
+        subText = findViewById(R.id.subText);
 
 
         MqttConnectOptions options = new MqttConnectOptions();
@@ -79,6 +78,9 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_LONG).show();
                     Log.i("***INFO***", "Android client connected to MQTT broker");
                     Tools.myRingtone.play();
+                    while (Tools.myRingtone.isPlaying()) {}
+                    Tools.myRingtone.play();
+                    myTimer.schedule(new MyTimerTask(), 0,2000);
                 }
 
                 @Override
@@ -90,13 +92,13 @@ public class MainActivity extends AppCompatActivity
         }
         catch (MqttException e) { e.printStackTrace(); }
 
-
         client.setCallback(new MqttCallback()
         {
             @Override
             public void connectionLost(Throwable cause)
             {
-
+                Log.d("mqtt", "connection lost");
+                myTimer.cancel();
             }
 
             @Override
@@ -117,48 +119,6 @@ public class MainActivity extends AppCompatActivity
         /********************
          *     BUTTONS      *
          ********************/
-        macButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                try
-                {
-                    MqttMessage message = new MqttMessage(Tools.topic.getBytes());
-                    client.publish(Tools.topic, message);
-                }
-                catch (MqttException e) { e.printStackTrace(); }
-            }
-        });
-
-        fileButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED )
-                {
-                    Log.w("***PERMISSIONS***", "READ_PHONE_STATE permission needed. Will try to grant it.");
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
-                }
-                while (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {}
-                TelephonyManager telephoneMngr = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-                androidID = telephoneMngr.getImei();
-                Log.i("***INFO***", "Current android's ID is: " + androidID);
-                try
-                {
-                    String[] list;
-                    AssetManager assetManager = getAssets(); //Get assets folder.
-                    String[] files = assetManager.list(""); //List all files in assets folder.
-//                    for(String file : files)
-//                        System.out.println("" + file);
-                    client.publish(Tools.topic, new MqttMessage(androidID.getBytes()));
-                }
-                catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
-                catch (IOException e) { e.printStackTrace(); }
-            }
-        });
-
         subscribeButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -168,6 +128,20 @@ public class MainActivity extends AppCompatActivity
                 try
                 {
                     client.subscribe(Tools.topic, 1);
+                }
+                catch (MqttException e) { e.printStackTrace(); }
+            }
+        });
+
+        macButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                try
+                {
+                    MqttMessage message = new MqttMessage(Tools.topic.getBytes());
+                    client.publish(Tools.topic, message);
                 }
                 catch (MqttException e) { e.printStackTrace(); }
             }
@@ -204,6 +178,61 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+        fileButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED )
+                {
+                    Log.w("***PERMISSIONS***", "READ_PHONE_STATE permission needed. Will try to grant it.");
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.READ_PHONE_STATE}, REQUEST_PHONE_STATE);
+                }
+                while (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {}
+                TelephonyManager telephoneMngr = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+                androidID = telephoneMngr.getImei();
+                Log.i("***INFO***", "Current android's ID is: " + androidID);
+                try
+                {
+                    String[] list;
+                    AssetManager assetManager = getAssets(); //Get assets folder.
+                    String[] files = assetManager.list(""); //List all files in assets folder.
+//                    for(String file : files)
+//                        System.out.println("" + file);
+                    client.publish(Tools.topic, new MqttMessage(androidID.getBytes()));
+                }
+                catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
+                catch (IOException e) { e.printStackTrace(); }
+            }
+        });
+    }
+
+    private void sendRandomFiles()
+    {
+        try
+        {
+            Log.d("timer", "zotimeropoulos");
+            client.publish(Tools.topic, new MqttMessage("zotimeropoulos".getBytes()));
+        }
+        catch (MqttException e) { e.printStackTrace(); }
+    }
+
+    private class MyTimerTask extends TimerTask
+    {
+
+        @Override
+        public void run()
+        {
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    sendRandomFiles();
+                }
+            });
+        }
     }
 
     @Override
@@ -311,34 +340,6 @@ public class MainActivity extends AppCompatActivity
         });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
-    }
-
-    public void onLocationChanged(Location location) {
-//        Geocoder geocoder;
-//        List<Address> addresses;
-//        geocoder = new Geocoder(this, Locale.getDefault());
-
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-
-
-//        Log.e("latitude", "latitude--" + latitude);
-//        try {
-//            Log.e("latitude", "inside latitude--" + latitude);
-//            addresses = geocoder.getFromLocation(latitude, longitude, 1);
-//            if (addresses != null && addresses.size() > 0) {
-//                String address = addresses.get(0).getAddressLine(0);
-//                String city = addresses.get(0).getLocality();
-//                String state = addresses.get(0).getAdminArea();
-//                String country = addresses.get(0).getCountryName();
-//                String postalCode = addresses.get(0).getPostalCode();
-//                String knownName = addresses.get(0).getFeatureName();
-//
-//                ro_gps_location.setText(state + " , " + city + " , " + country);
-//                ro_address.setText(address + " , " + knownName + " , " + postalCode);
-//            }
-//        }
-//        catch (IOException e) { e.printStackTrace(); }
     }
 
 }
