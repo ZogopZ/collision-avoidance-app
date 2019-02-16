@@ -1,5 +1,6 @@
 package mqttApp;
 
+import android.util.Log;
 import com.example.softwaredevelopment2018.MainActivity;
 import com.example.softwaredevelopment2018.Tools;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,7 +23,6 @@ public class mqttApp implements MqttCallback
     static final Boolean subscriber = true;
     static final Boolean publisher = true;
 
-
     /***********************************************************
      * This callback is invoked upon losing the MQTT connection.
      ***********************************************************/
@@ -33,7 +33,6 @@ public class mqttApp implements MqttCallback
         //Code to reconnect to the broker would go here if desired
     }
 
-
     /*******************************************************************
      * This callback is invoked when a message published by this client.
      * is successfully received by the broker.
@@ -42,7 +41,6 @@ public class mqttApp implements MqttCallback
     {
         //System.out.println("Pub complete" + new String(token.getMessage().getPayload()));
     }
-
 
     /*****************************************************************************
      * This callback is invoked when a message is received on a subscribed topic.
@@ -54,11 +52,9 @@ public class mqttApp implements MqttCallback
         System.out.println("-------------------------------------------------");
     }
 
-
-    /*******
-     * MAIN
-     *******/
-    public static void main(String[] args) {
+    /***MAIN***/
+    public static void main(String[] args)
+    {
         mqttApp smc = new mqttApp();
         smc.runClient();
     }
@@ -76,13 +72,13 @@ public class mqttApp implements MqttCallback
         // Connect to Broker
         try
         {
-            myClient = new MqttClient(BROKER_URL, "Client_1");
+            myClient = new MqttClient(BROKER_URL, "androidClient");
             myClient.setCallback(this);
             myClient.connect(connOpt);
         }
         catch (MqttException e) { e.printStackTrace(); System.exit(-1); }
 
-        System.out.println("******Connected to " + BROKER_URL);
+        Log.i("mqtt", "Connected to " + BROKER_URL);
         MqttTopic topic = myClient.getTopic(Tools.topic);
 
         // subscribe to topic if subscriber
@@ -91,7 +87,7 @@ public class mqttApp implements MqttCallback
             try
             {
                 myClient.subscribe(Tools.topic, 1);
-                System.out.println("******Subscribed to topic " + Tools.topic);
+                Log.i("mqtt", "Subscribed to topic" + Tools.topic);
             }
             catch (Exception e) { e.printStackTrace(); }
         }

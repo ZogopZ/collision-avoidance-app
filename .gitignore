@@ -8,3 +8,4 @@ Edge_Server/.idea
 Edge_Server/target
 Edge_Server/traininig_set.csv
 Edge_Server/EdgeServer-tcplocalhost8181
+Edge_Server/edgeServerClient-tcplocalhost8181

@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity
                     Log.i("***INFO***", "Android client connected to MQTT broker");
                     Tools.myRingtone.play();
                     /***Timer for random file selection between regural intervals.***/
-                    myTimer.schedule(new MyTimerTask(), 0,200);
+                    myTimer.schedule(new MyTimerTask(), 0,2000);
                 }
 
                 @Override
