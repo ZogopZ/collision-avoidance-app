@@ -3,27 +3,21 @@ package com.example.softwaredevelopment2018;
 import android.Manifest;
 import android.content.*;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.location.*;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.*;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.*;
-
 import java.io.*;
 import java.util.Random;
 import java.util.Timer;
@@ -77,7 +71,8 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_LONG).show();
                     Log.i("***INFO***", "Android client connected to MQTT broker");
                     Tools.myRingtone.play();
-                    myTimer.schedule(new MyTimerTask(), 0,2000); //Timer for sending random files between regural intervals.
+                    /***Timer for random file selection between regural intervals.***/
+                    myTimer.schedule(new MyTimerTask(), 0,200);
                 }
 
                 @Override
@@ -215,11 +210,21 @@ public class MainActivity extends AppCompatActivity
     {
         try
         {
-            String[] directoryContents = getAssets().list("Training_Set");
-            Random random = new Random();
-            int randomFileNumber = random.nextInt(directoryContents.length) + 1;
-            Log.d("timer", "zotimeropoulos: " + Integer.toString(randomFileNumber));
-            client.publish(Tools.topic, new MqttMessage("zotimeropoulos".getBytes()));
+            String[] directoryContents = getAssets().list("Training_Set"); //List all files of asset Training_Set.
+            Random random = new Random(); //Create random number generator.
+            int randomFileNumber = random.nextInt(directoryContents.length); //Choose a random number 0-35 (according to number of files in Training_Set directory.
+            File randomFile = new File(directoryContents[randomFileNumber]);
+            InputStream inputStream = getAssets().open("Training_Set" + randomFile.getAbsolutePath());
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            while ((bytesRead = inputStream.read(buffer)) != -1)
+                output.write(buffer, 0, bytesRead); //Read all file's bytes to output variable.
+            byte randomFileContents[] = output.toByteArray(); //Convert to byte array needed for Mqtt Message.
+//            byte[] randomFileContents = FileUtils.readFileToByteArray(randomFile.getAbsoluteFile());
+            Log.d("timer", "zotimeropoulos: " + Integer.toString(randomFileNumber) + ", " + randomFile.getName());
+            client.publish(Tools.topic, new MqttMessage(randomFile.getName().getBytes())); //Publish random file's name to topic.
+            client.publish(Tools.topic, new MqttMessage(randomFileContents)); //Publish contents to topic.
         }
         catch (MqttException e) { e.printStackTrace(); }
         catch (IOException e) { e.printStackTrace(); }
