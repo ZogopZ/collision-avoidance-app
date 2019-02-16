@@ -11,6 +11,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.*;
@@ -43,11 +44,11 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         final Context context = this.getApplicationContext();
         String clientId = "user1";
         String mqttHost = "tcp://192.168.1.6:8181";
         client = new MqttAndroidClient(context, mqttHost, clientId);
-
 
         Tools.getMacAddress();
         Tools.getRingtone(context);
@@ -60,12 +61,7 @@ public class MainActivity extends AppCompatActivity
         Button fileButton = findViewById(R.id.fileButton);
         subText = findViewById(R.id.subText);
 
-
         MqttConnectOptions options = new MqttConnectOptions();
-
-        ActionBar actionBar = getSupportActionBar();
-        if(null != actionBar)
-            actionBar.hide();
 
         try
         {
@@ -198,8 +194,6 @@ public class MainActivity extends AppCompatActivity
                     String[] list;
                     AssetManager assetManager = getAssets(); //Get assets folder.
                     String[] files = assetManager.list(""); //List all files in assets folder.
-//                    for(String file : files)
-//                        System.out.println("" + file);
                     client.publish(Tools.topic, new MqttMessage(androidID.getBytes()));
                 }
                 catch (UnsupportedEncodingException | MqttException e) { e.printStackTrace(); }
