@@ -3,9 +3,11 @@ package com.example.softwaredevelopment2018;
 import android.Manifest;
 import android.content.*;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.location.*;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -23,6 +25,7 @@ import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.*;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -74,9 +77,7 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(MainActivity.this, "connected", Toast.LENGTH_LONG).show();
                     Log.i("***INFO***", "Android client connected to MQTT broker");
                     Tools.myRingtone.play();
-                    while (Tools.myRingtone.isPlaying()) {}
-                    Tools.myRingtone.play();
-                    myTimer.schedule(new MyTimerTask(), 0,2000);
+                    myTimer.schedule(new MyTimerTask(), 0,2000); //Timer for sending random files between regural intervals.
                 }
 
                 @Override
@@ -101,7 +102,6 @@ public class MainActivity extends AppCompatActivity
             public void messageArrived(String topic, MqttMessage message) throws Exception
             {
                 subText.setText(new String(message.getPayload()));
-                Tools.myRingtone.play();
             }
 
             @Override
@@ -112,9 +112,9 @@ public class MainActivity extends AppCompatActivity
         });
 
 
-        /********************
-         *     BUTTONS      *
-         ********************/
+        /*******************************
+         *      Subscribe Button       *
+         ******************************/
         subscribeButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -129,6 +129,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        /*******************************
+         *     Mac Address Button      *
+         ******************************/
         macButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -143,6 +146,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        /*******************************
+         *     GPS Location Button     *
+         ******************************/
         gpsButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -175,6 +181,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        /*******************************
+         *     File Sender Button      *
+         ******************************/
         fileButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -206,10 +215,14 @@ public class MainActivity extends AppCompatActivity
     {
         try
         {
-            Log.d("timer", "zotimeropoulos");
+            String[] directoryContents = getAssets().list("Training_Set");
+            Random random = new Random();
+            int randomFileNumber = random.nextInt(directoryContents.length) + 1;
+            Log.d("timer", "zotimeropoulos: " + Integer.toString(randomFileNumber));
             client.publish(Tools.topic, new MqttMessage("zotimeropoulos".getBytes()));
         }
         catch (MqttException e) { e.printStackTrace(); }
+        catch (IOException e) { e.printStackTrace(); }
     }
 
     private class MyTimerTask extends TimerTask
