@@ -33,6 +33,10 @@ public class AndroidMqttClient implements MqttCallback
         runClient(context);
     }
 
+    public static MqttAndroidClient getAndroidMqttClient()
+    {
+        return client;
+    }
     /*****************************************************
      * Create MQTT client, connect to broker, subscribe. *
      *****************************************************/
@@ -49,6 +53,7 @@ public class AndroidMqttClient implements MqttCallback
             IMqttToken token = client.connect(connectOptions);
             token.setActionCallback(new IMqttActionListener()
             {
+
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken)
                 {

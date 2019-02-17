@@ -3,7 +3,6 @@ package com.example.softwaredevelopment2018;
 import android.Manifest;
 import android.content.*;
 import android.content.pm.PackageManager;
-import android.location.*;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
@@ -15,6 +14,7 @@ import android.view.*;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.gms.common.api.GoogleApiClient;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.*;
 
@@ -28,8 +28,12 @@ public class MainActivity extends AppCompatActivity
     TextView subText;
     private static final int REQUEST_FINE_LOCATION = 200;
     private static final int REQUEST_PHONE_STATE = 201;
-    LocationTrack locationTrack;
     public static String androidID;
+    EasyLocationProvider easyLocationProvider;
+
+    /**********************************************************/
+
+    /**********************************************************/
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -38,8 +42,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         final Context context = this.getApplicationContext();
-        String clientId = "user1";
-        String mqttHost = "tcp://192.168.1.6:8181";
 
         Tools.getMacAddress();
         Tools.getRingtone(context);
@@ -50,12 +52,60 @@ public class MainActivity extends AppCompatActivity
         Button gpsButton = findViewById(R.id.gpsButton);
         subText = findViewById(R.id.subText);
 
+        new AndroidMqttClient(context);
+        this.client = AndroidMqttClient.getAndroidMqttClient();
+
         if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED )
         { //Application requests for GPS location permissions.
             Log.w("permissions", "ACCESS_FINE_LOCATION permission needed. Will try to grant it.");
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
         }
-        new AndroidMqttClient(context);
+
+
+        /***************************************************************************************************************************/
+        /*Source: https://stackoverflow.com/questions/48908337/get-current-location-with-fused-location-provider/53348535#53348535 */
+        /***************************************************************************************************************************/
+        easyLocationProvider = new EasyLocationProvider.Builder(this)
+                .setInterval(5000)
+                .setFastestInterval(2000)
+                //.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setListener(new EasyLocationProvider.EasyLocationCallback()
+                {
+                    @Override
+                    public void onGoogleAPIClient(GoogleApiClient googleApiClient, String message)
+                    {
+                        try
+                        {
+                            Log.i("Location", "onGoogleAPIClient: " + message);
+                            Toast.makeText(getApplicationContext(), "onGoogleAPIClient: " + message, Toast.LENGTH_SHORT).show();
+                            client.publish(Tools.topic, new MqttMessage(("onGoogleAPIClient: " + message).getBytes()));
+                        }
+                        catch (MqttPersistenceException e) { e.printStackTrace(); }
+                        catch (MqttException e) { e.printStackTrace(); }
+                    }
+
+                    @Override
+                    public void onLocationUpdated(double latitude, double longitude)
+                    {
+                        try
+                        {
+                            Log.i("Location","onLocationUpdated:: " + "Latitude: " + latitude + " Longitude: " + longitude);
+                            Toast.makeText(getApplicationContext(), "onLocationUpdated:: " + "Latitude: " + latitude + " Longitude: " + longitude, Toast.LENGTH_SHORT).show();
+                            client.publish(Tools.topic, new MqttMessage(("onLocationUpdated:: " + "Latitude: " + latitude + " Longitude: " + longitude).getBytes()));
+                        }
+                        catch (MqttPersistenceException e) { e.printStackTrace(); }
+                        catch (MqttException e) { e.printStackTrace(); }
+                    }
+
+                    @Override
+                    public void onLocationUpdateRemoved()
+                    {
+                        Log.i("Location","onLocationUpdateRemoved");
+                    }
+                }).build();
+        getLifecycle().addObserver(easyLocationProvider);
+        /*****************************************************************************************************************************/
+
 
         /*******************************
          *      Subscribe Button       *
@@ -65,10 +115,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                Tools.subscribe(client);
                 try
                 {
+                    if (client.isConnected())
+                        client.unsubscribe(Tools.topic);
                     client.subscribe(Tools.topic, 1);
+                    client.publish(Tools.topic, new MqttMessage(("Android: " + Tools.topic " subscribed.").getBytes());
                 }
                 catch (MqttException e) { e.printStackTrace(); }
             }
@@ -94,36 +146,20 @@ public class MainActivity extends AppCompatActivity
         /*******************************
          *     GPS Location Button     *
          ******************************/
-        gpsButton.setOnClickListener(new View.OnClickListener()
+        macButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED )
+                try
                 {
-                    Log.i("Permissions", "ACCESS_FINE_LOCATION permission needed. Will try to grant it.");
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+                    MqttMessage message = new MqttMessage(Tools.topic.getBytes());
+                    client.publish(Tools.topic, message);
                 }
-                locationTrack = new LocationTrack(MainActivity.this);
-                if (locationTrack.canGetLocation())
-                {
-                    Location location = LocationTrack.myLocation;
-                    String latitude = Double.toString(location.getLatitude());
-                    String longitude = Double.toString(location.getLongitude());
-                    Toast.makeText(getApplicationContext(), "Latitude:" + latitude + "\nLongitude:" + longitude, Toast.LENGTH_SHORT).show();
-                    Log.i("Location", "Latitude: " + latitude + " Longitude: " + longitude);
-                    try
-                    {
-                        client.publish(Tools.topic, new MqttMessage(("" + latitude + ", " + longitude).getBytes()));
-                    }
-                    catch (MqttException e ) { e.printStackTrace(); }
-                }
-                else
-                {
-//                    locationTrack.showSettingsAlert();
-                }
+                catch (MqttException e) { e.printStackTrace(); }
             }
         });
+
     }
 
     @Override
@@ -233,4 +269,10 @@ public class MainActivity extends AppCompatActivity
         alertDialog.show();
     }
 
+    @Override
+    protected void onDestroy() {
+        easyLocationProvider.removeUpdates();
+        getLifecycle().removeObserver(easyLocationProvider);
+        super.onDestroy();
+    }
 }
