@@ -11,7 +11,7 @@ public class Main {
             System.out.println("|Websocket Server Initialization|");
             BackhaulSocket.connect();
             System.out.println("|Database Connection Initialization|");
-//            DatabaseConnection.connect();
+            DatabaseConnection.connect();
         }
         catch (Throwable t) { t.printStackTrace(); }
     }

@@ -1,28 +1,26 @@
 package backhaul.server;
 
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class DatabaseConnection
 {
-//    static String username = "root"; //To be changed according to remote's server username.
-//    static String password = "root"; //To be changed according to remote's server password.
-//    static String databaseUrl = "jdbc:mysql://localhost:3306/databaseName";
-    //Connect to this database. localhost to be changed according to remote server, databaseName to be changed
-    //according to remote's server database name.
 
-    static String databaseUrl = "jdbc:mysql://ensembldb.ensembl.org:3337/MySQL";
+    static String databaseUrl = "jdbc:mysql://localhost:3306/database4bh";//"jdbc:mysql://ensembldb.ensembl.org:3337/MySQL";
 
     public static void connect() throws SQLException
     {
-        Connection connection = null;
         try
         {
-//            connection = DriverManager.getConnection(databaseUrl, username, password);
-            connection = DriverManager.getConnection(databaseUrl);
-            System.out.println(" -connection established to SQL database");
+            //1. get connection to database
+            Connection myConn = DriverManager.getConnection(databaseUrl, "root", "root");
+            //2. create statement
+            Statement myStmt = myConn.createStatement();
+            //3. Execute sql query
+            String sql = "insert into database4bh"
+                    + "(Android_ID,Time_Stamp,GPS_Signal,Criticality)"
+                    + "values(A.AndroidID,A.TimeStamp,A.GPSSignal,A.CritLevel)";
+            //System.out.println(" -connection established to SQL database");
+            myStmt.executeUpdate(sql);
         }
         catch (SQLException e)
         {

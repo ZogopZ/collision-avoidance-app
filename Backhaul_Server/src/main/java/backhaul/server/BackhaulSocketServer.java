@@ -58,6 +58,7 @@ public class BackhaulSocketServer
             else if (message.startsWith("logs")) //Edge server sends logging details.
             {
                 System.out.println(""+message);
+                DatabaseElement.StringSplitter(message);
             }
             else if (message.equals("disconnecting")) //Edge server is shutting down.
             {
