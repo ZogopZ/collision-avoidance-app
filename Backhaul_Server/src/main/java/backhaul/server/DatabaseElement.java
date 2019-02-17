@@ -3,10 +3,10 @@ package backhaul.server;
 class DatabaseElement
 {
 
-    private static String AndroidID;
-    private static String TimeStamp;
-    private static String GPSSignal;
-    private static String CritLevel;
+    public static String AndroidID;
+    public static String TimeStamp;
+    public static String GPSSignal;
+    public static String CritLevel;
 
     public static void StringSplitter(String s)
     {

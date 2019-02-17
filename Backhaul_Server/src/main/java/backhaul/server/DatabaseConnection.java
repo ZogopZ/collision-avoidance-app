@@ -16,16 +16,12 @@ public class DatabaseConnection
             //2. create statement
             Statement myStmt = myConn.createStatement();
             //3. Execute sql query
-            String sql = "insert into database4bh"
-                    + "(Android_ID,Time_Stamp,GPS_Signal,Criticality)"
-                    + "values(A.AndroidID,A.TimeStamp,A.GPSSignal,A.CritLevel)";
+            String sql = "insert into database4bh" + "(Android_ID,Time_Stamp,GPS_Signal,Criticality)" +
+                    (DatabaseElement.AndroidID + DatabaseElement.TimeStamp + DatabaseElement.GPSSignal + DatabaseElement.CritLevel);
             //System.out.println(" -connection established to SQL database");
             myStmt.executeUpdate(sql);
         }
-        catch (SQLException e)
-        {
-            System.err.println(e.getMessage());
-        }
+        catch (SQLException e) { System.err.println(e.getMessage()); }
         finally
         {
             connection.close();
