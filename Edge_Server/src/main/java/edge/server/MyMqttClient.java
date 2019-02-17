@@ -3,6 +3,7 @@ package edge.server;
 import org.eclipse.paho.client.mqttv3.*;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import static java.lang.Boolean.TRUE;
@@ -24,7 +25,9 @@ public class MyMqttClient implements MqttCallback
     @Override
     public void connectionLost(Throwable t)
     {
-        System.out.println("Connection lost!");
+        System.out.println(" -connection lost!");
+        System.out.println(" -retrying connection to broker");
+        MyMqttClient.main();
         //Code to reconnect to the broker would go here if desired
     }
 
@@ -42,12 +45,20 @@ public class MyMqttClient implements MqttCallback
      * This callback is invoked when a message is received on a subscribed topic.
      ****************************************************************************/
     @Override
-    public void messageArrived(String topic, MqttMessage message) throws Exception
+    public void messageArrived(String topic, MqttMessage message)
     {
-        System.out.println("" + message);
+        String newMessage = message.toString();
+        File newFile;
+        if (newMessage.startsWith("FILE")) //New mqtt message contains data for entropy calculation.
+        {
+            newFile = Tools.storeFile(newMessage);
+            Tools.extractData(newFile);
+        }
+        else //Non file mqtt message.
+            System.out.println("" + message);
     }
 
-    public static void main()
+    static void main()
     {
         MyMqttClient client = new MyMqttClient();
         client.runClient();
@@ -57,7 +68,7 @@ public class MyMqttClient implements MqttCallback
     /****************************************************************
      * Create a MQTT client, connect to broker, pub/sub, disconnect.
      ****************************************************************/
-    public void runClient()
+    private void runClient()
     {
         connectOptions = new MqttConnectOptions();
         connectOptions.setCleanSession(true);
@@ -87,95 +98,12 @@ public class MyMqttClient implements MqttCallback
         {
             try
             {
-                MqttDeliveryToken token = null;
-                token = topic.publish(new MqttMessage("hello there".getBytes()));
+                MqttDeliveryToken token;
+                token = topic.publish(new MqttMessage("".getBytes()));
                 token.waitForCompletion();
             }
-            catch (MqttPersistenceException e) { e.printStackTrace(); }
             catch (MqttException e) { e.printStackTrace(); }
         }
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    public static void startClient()
-//    {
-//        String broker = "tcp://localhost:8181";
-//        String edgeClientId = "EdgeServer";
-//        try
-//        {
-//            MqttClient edgeClient = new MqttClient(broker, edgeClientId);
-//            MqttConnectOptions connOpts = new MqttConnectOptions();
-//            connOpts.setCleanSession(true);
-//            System.out.println(" -connecting to broker -> " + broker);
-//            edgeClient.connect(connOpts);
-//            System.out.println(" -connect ok");
-//        }
-//        catch (MqttException e) { e.printStackTrace(); }
-//    }
-//
-//    public static void subscribe() throws IOException
-//    {
-//        ProcessBuilder builder = new ProcessBuilder("mosquitto_sub", "-h", "localhost",
-//                "-p", "8181", "-t", "4C:49:E3:13:88:24"); //Edge server subscribes to specific device's topic.
-//        builder.redirectErrorStream(true);
-//        final Process process = builder.start();
-//        Mqtt.watch(process);
-//        while (TRUE) ;
-//    }
-//
-//    public static void watch(final Process process)
-//    {
-//        new Thread(() -> //A new thread is created to watch over the topic.
-//        {
-//            BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//            String line = null;
-//            try
-//            {
-//                while ((line = input.readLine()) != null)
-//                {
-//                    System.out.println(line);
-//                }
-//            }
-//            catch (IOException e) { e.printStackTrace(); }
-//        }).start();
-//    }
-//}

@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity
 
         Tools.getMacAddress();
         Tools.getRingtone(context);
-//        Tools.getAndroidID(context);
 //        Tools.checkConnection(context);
 
         Button subscribeButton = findViewById(R.id.subscribeButton);
@@ -57,6 +56,12 @@ public class MainActivity extends AppCompatActivity
         Button gpsButton = findViewById(R.id.gpsButton);
         Button fileButton = findViewById(R.id.fileButton);
         subText = findViewById(R.id.subText);
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED )
+        {
+            Log.w("***PERMISSIONS***", "ACCESS_FINE_LOCATION permission needed. Will try to grant it.");
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+        }
 
         MqttConnectOptions options = new MqttConnectOptions();
 
@@ -96,7 +101,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception
             {
-                subText.setText(new String(message.getPayload()));
+                if (!message.toString().startsWith("FILE"))
+                    subText.setText(new String(message.getPayload()));
             }
 
             @Override
@@ -154,7 +160,6 @@ public class MainActivity extends AppCompatActivity
                     Log.w("***PERMISSIONS***", "ACCESS_FINE_LOCATION permission needed. Will try to grant it.");
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
                 }
-                while (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {}
                 locationTrack = new LocationTrack(MainActivity.this);
                 if (locationTrack.canGetLocation())
                 {
@@ -218,13 +223,13 @@ public class MainActivity extends AppCompatActivity
             byte[] buffer = new byte[8192];
             int bytesRead;
             ByteArrayOutputStream output = new ByteArrayOutputStream();
+            output.write(("FILE:" + randomFile.getName() + "\n").getBytes()); //Add file's name to byte array.
+            output.write(("ANDROID_ID:" + Tools.topic + "\n").getBytes()); //Add android's mac address to byte array.
             while ((bytesRead = inputStream.read(buffer)) != -1)
                 output.write(buffer, 0, bytesRead); //Read all file's bytes to output variable.
             byte randomFileContents[] = output.toByteArray(); //Convert to byte array needed for Mqtt Message.
-//            byte[] randomFileContents = FileUtils.readFileToByteArray(randomFile.getAbsoluteFile());
             Log.d("timer", "zotimeropoulos: " + Integer.toString(randomFileNumber) + ", " + randomFile.getName());
-            client.publish(Tools.topic, new MqttMessage(randomFile.getName().getBytes())); //Publish random file's name to topic.
-            client.publish(Tools.topic, new MqttMessage(randomFileContents)); //Publish contents to topic.
+            client.publish(Tools.topic, new MqttMessage(randomFileContents)); //Publish file's name and contents to topic.
         }
         catch (MqttException e) { e.printStackTrace(); }
         catch (IOException e) { e.printStackTrace(); }

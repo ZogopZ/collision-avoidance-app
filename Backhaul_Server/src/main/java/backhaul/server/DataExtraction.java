@@ -10,9 +10,9 @@ public class DataExtraction
     public static void extract() throws IOException, InterruptedException
     {
         int lineCounter = 0;
-        BufferedReader br = null;
-        String sCurrentLine = null;
-        List<Double> list = new ArrayList<Double>();
+        BufferedReader br;
+        String sCurrentLine;
+        List<Double> list = new ArrayList<>();
 
 
         File directory = new File("Training_Set");
@@ -41,7 +41,7 @@ public class DataExtraction
             {
                 br = new BufferedReader(new FileReader(file));
                 while ((sCurrentLine = br.readLine()) != null)
-                { //Parse each line of each file.
+                { //Parse each line of file.
                     lineNo++;
                     if (lineNo != 0)
                     { //Skip the first line.
@@ -75,7 +75,7 @@ public class DataExtraction
             { //This for loop will iterate through all "columns" of arraylist.
                 lineNo = 0;
                 for (int i = 0; i < list.size(); i += 14)
-                { //This for loop will iterate through all "lines" of arraylist.
+                { //This for loop, will iterate through all "lines" of arraylist.
                     vector[lineNo] = list.get(i + columnNo); //Copy data to vector.
                     lineNo++;
                 }
