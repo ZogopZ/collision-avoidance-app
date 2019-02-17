@@ -50,23 +50,6 @@ public class Tools
         myRingtone = RingtoneManager.getRingtone(context, uri);
     }
 
-//    static void getAndroidID(Context context)
-//    {
-//        try
-//        {
-//            final TelephonyManager tManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-//            final String tmDevice, tmSerial, androidId;
-//            tmDevice = "" + tManager.getDeviceId();
-//            tmSerial = "" + tManager.getSimSerialNumber();
-//            androidId = "" + android.provider.Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-//
-//            UUID deviceUuid = new UUID(androidId.hashCode(), ((long) tmDevice.hashCode() << 32) | tmSerial.hashCode());
-//            String deviceId = deviceUuid.toString();
-//            System.out.println("***********" + deviceId);
-//        }
-//        catch (SecurityException e) { System.out.println("-- " + e.getLocalizedMessage()); }
-//    }
-
     static void subscribe(final MqttAndroidClient client)
     {
         try
@@ -78,21 +61,13 @@ public class Tools
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken)
                 {
-                    // The message was published
-//                    Tools.myRingtone.play();
                     try
                     {
                         client.publish(Tools.topic, new MqttMessage(("Android with ID: " + MainActivity.androidID + " just subscribed").getBytes()));
                         //Publish mac address to topic.
                     }
-                    catch (MqttPersistenceException e)
-                    {
-                        e.printStackTrace();
-                    }
-                    catch (MqttException e)
-                    {
-                        e.printStackTrace();
-                    }
+                    catch (MqttPersistenceException e) { e.printStackTrace(); }
+                    catch (MqttException e) { e.printStackTrace(); }
                 }
 
                 @Override
@@ -134,4 +109,5 @@ public class Tools
 //            }
 //        };
 //    }
+
 }

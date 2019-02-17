@@ -43,7 +43,7 @@ public class LocationTrack extends Service implements LocationListener
             checkNetwork = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER); //Get network provider status.
             if (!checkGPS)
             {
-                Log.i("***GPS_INFO***", "GPS is turned off. Requesting GPS activation.");
+                Log.i("Location", "GPS is turned off. Requesting GPS activation.");
                 showSettingsAlert();
             }
             else
@@ -53,17 +53,20 @@ public class LocationTrack extends Service implements LocationListener
                 {
                     @Override
                     public void onSuccess(Location location)
-                    { // GPS location can be null if GPS is switched off.
+                    { //GPS location can be null if GPS is switched off.
                         if (location != null)
-                            Log.i("***INFO***", "Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude());
+                        {
+                            Log.i("Location", "Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude());
+                            Toast.makeText(context, "Latitude: " + location.getLatitude() + " Longitude: " + location.getLongitude(), Toast.LENGTH_LONG).show();
+                            LocationTrack.canGetLocation = true;
+                        }
                         myLocation = location;
-                        LocationTrack.canGetLocation = true;
                     }
                 });
             }
         }
         catch (NullPointerException e) { e.printStackTrace(); }
-        catch (SecurityException e) { Log.d("***DEBUG***", "" + e.getLocalizedMessage()); }
+        catch (SecurityException e) { Log.d("Debug", "" + e.getLocalizedMessage()); }
     }
 
     public boolean canGetLocation()
@@ -82,18 +85,17 @@ public class LocationTrack extends Service implements LocationListener
             public void onClick(DialogInterface dialog, int which)
             {
                 checkGPS = true;
-                dialog.dismiss();
                 Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                 context.startActivity(intent);
-
+                dialog.dismiss();
             }
         });
         builder.setNegativeButton("No", new DialogInterface.OnClickListener()
         {
             public void onClick(DialogInterface dialog, int which)
             {
-                dialog.dismiss();
                 Toast.makeText(context, "Cannot get current location. Gps is disabled", Toast.LENGTH_LONG).show();
+                dialog.dismiss();
             }
         });
         AlertDialog alertDialog = builder.create();
@@ -111,7 +113,7 @@ public class LocationTrack extends Service implements LocationListener
     {
         myLocation = location;
         String message = "" + Double.toString(myLocation.getLatitude()) +  ", " + Double.toString(myLocation.getLongitude());
-        Log.i("***DEBUG***", "" + message);
+        Log.i("location", "" + message);
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
@@ -129,4 +131,5 @@ public class LocationTrack extends Service implements LocationListener
     public void onProviderDisabled(String s) {
 
     }
+
 }
