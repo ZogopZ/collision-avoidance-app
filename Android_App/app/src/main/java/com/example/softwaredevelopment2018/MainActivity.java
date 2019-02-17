@@ -40,7 +40,6 @@ public class MainActivity extends AppCompatActivity
         final Context context = this.getApplicationContext();
         String clientId = "user1";
         String mqttHost = "tcp://192.168.1.6:8181";
-        client = new MqttAndroidClient(context, mqttHost, clientId);
 
         Tools.getMacAddress();
         Tools.getRingtone(context);

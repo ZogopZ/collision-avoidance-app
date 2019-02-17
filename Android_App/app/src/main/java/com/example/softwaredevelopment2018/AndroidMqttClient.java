@@ -32,12 +32,6 @@ public class AndroidMqttClient implements MqttCallback
         handler = new Handler(context.getMainLooper());
         runClient(context);
     }
-//    public void main(Context context)
-//    {
-//        handler = new Handler(context.getMainLooper());
-//        AndroidMqttClient client = new AndroidMqttClient();
-//        client.runClient(context);
-//    }
 
     /*****************************************************
      * Create MQTT client, connect to broker, subscribe. *
@@ -96,7 +90,7 @@ public class AndroidMqttClient implements MqttCallback
     /*******************************************************************
      * This callback is invoked when a message published by this client.
      * is successfully received by the broker.
-     * *****************************************************************/
+     *******************************************************************/
     @Override
     public void deliveryComplete(IMqttDeliveryToken token)
     {
