@@ -1,5 +1,5 @@
 # collision-tracker
-A collision and avoidance detection system.
+A collision and avoidance detection system.  
 # Android Application
 - ### Main Thread
     The main thread is responsible for synchronizing the android application. During the initialization the application asks for permissions. The android version used for the development was the Android 7 thus permissions must be asked runtime. Using the ```getMacAddress()``` method the topic at which the android client will be subscribed is initialized. At this point the main activity boots the mqtt client and defines a number of ```OnClickListeners``` to buttons. The application's interface also includes a ```settings``` button that opens a new layout. This layout contains three buttons to solely grant permissions from the user and an interface for text input. Lastly there is an option to exit the application.
@@ -8,15 +8,17 @@ A collision and avoidance detection system.
 - ### Dependencies
     - For the android mqtt client implementation libraries *org.eclipse.paho.client.mqttv3* and *org.eclipse.paho.android.service*  were used.
     - For the android interface library *com.android.support*  was used and the testing framework  *junit*.
-    - For the gps tracking implementation *com.google.android.gms* library was used.
+    - For the gps tracking implementation *com.google.android.gms* library was used.  
 # Backhaul Server
 - ### EEG Data Extraction
     The backhaul server initially is responsible for developing the training set of the model which will later be sent to the edge server. The entropy is calculated for each channel in each csv file in the directory Training Set. The entropy values along with the experiment's name "Eyes Closed" or "Eyes Opened" are then copied in the file training_set.csv. When all experiments are processed the file is ready to be sent to the edge server. For the ```DataExtraction``` implementation library *MIToolboxJava* was used and the *JavaSDK*.
-    
 - ### Websocket Server
     After the training_set.csv file is created the backhaul server boots the websocket server and waits for the edge server to connect. Using the annotation ```@OnWebSocketConnect``` the backhaul server is informed about incoming connections and using ```@OnWebSocketMessage``` it receives client messages. When the backhaul server receives the "Hello Backhaul Server" message from the edge server it sends the contents of the training_set.csv file. When the edge server disconnects from the websocket the backhaul server is informed through the ```@OnWebSocketClose``` and terminates the websocket server. For the websocket client implementation *jetty-runner-9.4.6.v20170531* library was used along with the *JavaSDK*.
 - ### JDBC Driver
     Following the websocket connection and the training_set.csv file upload, the backhaul server initializes the connection to the database. The connection is achieved using the jdbc driver and by using the correct username, password, and database URL. For the jdbc driver implementation *mysql-connector-java-8.0.13.jar* library was used along with the *JavaSDK*.
 - ### Classes
     - ```DatabaseElement``` Class: This class defines 4 public String variables and a constructor with a String input argument. During the object's instantiation the input String is split into 4 substrings assigned to the 4 public String variables.
-    - ```DatabaseConnection``` Class: This class oversees the connection to the SQL database and defines 3 static String variables and a subclass ```connect```. It connects to the database and dumps the ```DatabaseElement``` Strings in it.
+    - ```DatabaseConnection``` Class: This class oversees the connection to the SQL database and defines 3 static String variables and a subclass ```connect```. It connects to the database and dumps the ```DatabaseElement``` Strings in it.  
+# Edge Server
+- ### Websocket Client
+    Initialy the edge server must connect to the backhaul server and download the training_set.csv file. When the websocket server is ready the edge server connects as a client using the "ws://localhost:8080" ```URI```. When the connection to the websocket server is completed the edge server sends a simple "Hello Backhaul Server" message, downloads the training_set.csv data using the annotation ```OnWebSocketMessage``` and stores the data in a new file. Then the edge server closes the session and sends to the backhaul server a ```StatusCode``` and a termination message. For the websocket client implementation *jetty-runner-9.4.6.v20170531* library was used along with the *JavaSDK*.
